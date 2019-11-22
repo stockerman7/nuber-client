@@ -155,7 +155,7 @@ Apollo 에는 아주 좋은 기능들이 있다. 그중에 서버로부터 들�
 
 ----
 
-## #2.2 Apollo Setup part Two
+## #2.3 Apollo Setup part Three
 
 이제 Apollo 에서는 ApolloClient 로 clientState 를 자동으로 정의한다. 그래서 clientState 에서 기본설정(default) 해주는 방법에 관해 알아야 한다.
 
