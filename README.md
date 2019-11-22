@@ -149,6 +149,71 @@ export default client;
 
 Apollo 에는 아주 좋은 기능들이 있다. 그중에 서버로부터 들어오는 요청을 연결해 주는 옵션도 있다.
 
-- 우선 ApolloClient 객체에서 request 을 설정한다. 이 request 는 비동기 메소드이다. 클라이언트 측에서 요청할 때마다 클라이언트 Top-Level 설정에서 Mutation, Query 를 가로챈다.
-- apollo-boost 에서 { Operation } 을 가져오고 Operation 타입의 인자인 operation 을 비동기로 받는다.
-- 그 operation 속성으로 setContext 함수가 있다. 그 함수는 localhost 를 통해 전달된 JWT headers 를 받아 처리한다.
+- 우선 `ApolloClient` 객체에서 `request` 을 설정한다. 이 `request` 는 비동기 메소드이다. 클라이언트 측에서 요청할 때마다 클라이언트 Top-Level 설정에서 Mutation, Query 를 가로챈다.
+- `apollo-boost` 에서 `{ Operation }` 을 가져오고 `Operation` 타입의 인자인 `operation` 을 비동기로 받는다.
+- 그 `operation` 속성으로 `setContext` 함수가 있다. 그 함수는 `localhost` 를 통해 전달된 JWT headers 를 받아 처리한다.
+
+----
+
+## #2.2 Apollo Setup part Two
+
+이제 Apollo 에서는 ApolloClient 로 clientState 를 자동으로 정의한다. 그래서 clientState 에서 기본설정(default) 해주는 방법에 관해 알아야 한다.
+
+#### apollo.ts
+```ts
+import ApolloClient, { Operation } from "apollo-boost";
+
+const client = new ApolloClient({
+  clientState: {
+    defaults: {
+      auth: {
+        __typename: "Auth",
+        isLoggedIn: Boolean(localStorage.getItem("jwt")),
+      },
+    },
+    resolvers: {
+      Mutation: {
+        logUserIn: (_, { token }, { cache }) => {
+          localStorage.setItem("jwt", token);
+          cache.writeData({
+            data: {
+              auth: {
+                __typename: "Auth",
+                isLoggedIn: true,
+              },
+            },
+          });
+          return null;
+        },
+        logUserOut: (_, __, { cache }) => {
+          localStorage.removeItem("jwt");
+          cache.writeData({
+            data: {
+              __typename: "Auth",
+              isLoggedIn: false,
+            },
+          });
+          return null;
+        },
+      },
+    },
+  },
+  request: async (operation: Operation) => {
+    operation.setContext({
+      headers: {
+        "X-JWT": localStorage.getItem("jwt") || "",
+      },
+    });
+  },
+  uri: "http://localhost:4000/graphql",
+});
+
+export default client;
+```
+
+- 우선 `clientStete` 속성을 만들고 거기에 `defaults` 를 설정한다. 그 `defaults` 는 `auth`(authorization: 인증) 라는 사용자가 지정한 객체 속성으로 `__typename`, `isLoggedIn` 를 가지고 있다. `__typename` 는 GraphQL 에서 처럼 Auth 라는 타입을 지정한 것이다. `isLoggedIn` 을 사용하는 이유는 사용자 로그인 여부를 알기 위해서다. `Boolean(localStorage.getItem("jwt"))` 처럼 `localStorage` 에서 `"jwt"` 라는 Key 로 값을 가지고 있는지 여부로 `Boolean` 함수를 감싼다. 결과적으로 `isLoggedIn` 은 Key 유무로 인해 `true`, `false` 값을 가질 것이다.
+- 또 GraphQL 에서 처럼 Resolver 들을 추가할 수 있다. `Mutation` 속성으로 두개의 작업을 만든다. 하나는 사용자가 로그인 할 때 `logUserIn`, 다른 하나는 사용자가 로그아웃 할 때 `logUserOut` 이다. 그리고 이 메소드들은 `parent`, `context`, `cache` 를 인자로 받는다.
+- `logUserIn` 은 `context` 인자로 `{ token }` 을 받는다. 그리고 `localStorage.setItem("jwt", token)` 처럼 `localStorage` 에 `token` 을 저장하기 위해 `"jwt"` 라는 키를 생성한다. 그리고 `cache` 에 초기설정 값들(`defaults`)과 관련된 데이터인 `__typename`, `isLoggedIn` 을 수정한다.
+- `logUserOut` 은 아주 간단하다. `localStorage` 에서 해당 `"jwt"` 키를 삭제하고 `cache` 데이터의 `isLoggedIn: false` 값으로 변경하기만 하면 로그아웃이 된다. 
+
+이런식으로 ApolloClient 는 사용자의 State 를 변경할 수 있어 유용하다.
