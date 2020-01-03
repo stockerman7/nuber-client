@@ -155,6 +155,8 @@ Apollo 에는 아주 좋은 기능들이 있다. 그중에 서버로부터 들�
 - `uri` 는 GraphQL Endpoint 로 서버와 통신할 주소이다. 현재 서버는 local 인 점을 유념하자.
 
 `ApolloClient` 설정에서 `headers` 설정은 매우 유용하다. `fetch` 함수를 사용해 일일이 헤더를 세팅하는 번거로운 작업을 하지 않아도 되기 때문이다.
+
+
 ----
 
 ## #2.3 Apollo Setup part Three
@@ -232,7 +234,7 @@ import AppContainer from "./AppContainer";
 export default AppContainer;
 ```
 
-index.tsx 에도 새로 생성된 App 을 연결해야 한다.
+`index.tsx` 에도 새로 생성된 `App` 을 연결해야 한다.
 
 #### index.tsx
 ```tsx
@@ -250,7 +252,7 @@ ReactDOM.render(
 );
 ```
 
-그러면 index.tsx 는 Components/App 디렉토리에 index.ts 를 찾아간다. index.ts 는 AppContainer.tsx 모듈을 알고 있기 때문에 연결된다. 그런데 어떻게 AppContainer 에게 로그인 여부를 전달 할 수 있을까? 다음 AppContainer 와 AppQueries 를 같이 보도록 하자.
+그러면 `index.tsx` 는 `Components/App` 디렉토리에 `index.ts` 를 찾아간다. `index.ts` 는 `AppContainer.tsx` 모듈을 알고 있기 때문에 연결된다. 그런데 어떻게 `AppContainer` 에게 로그인 여부를 전달 할 수 있을까? 다음 `AppContainer` 와 `AppQueries` 를 같이 보도록 하자.
 
 #### AppContainer.tsx
 ```tsx
@@ -277,11 +279,11 @@ export const IS_LOGGED_IN = gql`
 ```
 
 
-- AppContainer 에서는 react-apollo 모듈에서 GraphQL 을 사용하기 위해 graphql 객체를 불러온다.
-- AppQueries 에서는 apollo-boost 모듈에서 gql 객체를 불러와 graphql tag 들을 사용할 것이다. 이 graphql query tag 를 이용해서 로그인 여부를 조회한다. apollo.ts 에서 설정 값으로 준 auth 속성을 사용해 조회하면 API(여기서는 Nuber 를 일컬음) 에서 자동으로 쿼리가 실행된다. 하지만 API 에는 auth 라는 resolver 는 존재하지 않는다. 그 resolver 는 우리가 apollo.ts 의 ApolloClient 생성자에서 clientState 속성에 auth 를 localStorage 안에 들어가도록 설정했다. 그래서 localStorage 에 있는 것을 가져오려면 로컬에 있다는 것을 알려줘야 하기 때문에 isLoggedIn @client 을 적용한다. 결과적으로 API 에 Query 를 보내지 않고 cache 로 보내게 된다. 그리고 그 cache 에서 로그인 유무를 알려준다.
-- 그럼 AppContainer 의 export default graphql(IS_LOGGED_IN)(AppContainer) 작동방식을 이해할 수 있다. graphql 함수로 IS_LOGGED_IN 인자를 받는데 그것은 Query 데이터 결과일 것이다. 그럼 그 결과는 다음 인자로 다시 전달되는데 const AppContainer = ({ data }) => { ... } 처럼 가공된 결과일 것이다.
+- `AppContainer` 에서는 `react-apollo` 모듈에서 GraphQL 을 사용하기 위해 `graphql` 객체를 불러온다.
+- `AppQueries` 에서는 `apollo-boost` 모듈에서 `gql` 객체를 불러와 graphql tag 들을 사용할 것이다. 바로 이 graphql tag 를 이용해서 로그인 여부를 조회한다. `apollo.ts` 에서 설정 값으로 준 `auth` 속성을 사용해 조회하면 API(여기서는 Nuber 를 일컬음) 에서 자동으로 쿼리가 실행된다. 하지만 API 에는 `auth` 라는 resolver 는 존재하지 않는다. 그 resolver 는 우리가 `apollo.ts` 의 `ApolloClient` 생성자에서 `clientState` 속성에 auth 를 `localStorage` 안에 들어가도록 설정했다. 그래서 `localStorage` 에 있는 것을 가져오려면 로컬에 있다는 것을 알려줘야 하기 때문에 `isLoggedIn @client` 을 적용한다. 결과적으로 API 에 Query 를 보내지 않고 `cache` 로 보내게 된다. 그리고 그 cache 에서 로그인 유무를 알려준다.
+- 그럼 `AppContainer` 의 `export default graphql(IS_LOGGED_IN)(AppContainer)` 작동방식을 이해할 수 있다. graphql 함수로 `IS_LOGGED_IN` 인자를 받는데 그것은 Query 데이터 결과일 것이다. 그럼 그 결과는 다음 인자로 다시 전달되는데 `const AppContainer = ({ data }) => { ... }` 처럼 가공된 결과일 것이다.
 
-client 앱을 실행해보자.
+클라이언트 앱을 실행해보자.
 
 ```bash
 $ yarn start 
@@ -289,7 +291,49 @@ $ yarn start
 
 <img src="" width="" alt="">
 
-위 그림처럼 `"auth":{"isLoggedIn":false, ...}` 나타난 것을 볼 수 있다. 로그인 여부를 확인할 수 있다. 지금까지 client 측에서의 resolver 사용법을 간략하게 알아보았다.
+위 그림처럼 `"auth":{"isLoggedIn":false, ...}` 나타난 것을 볼 수 있다. 로그인 여부를 확인할 수 있다. 지금까지 `client` 측에서의 `resolver` 사용법을 간략하게 알아보았다.
 
 ----
 
+## #2.6 Typescript and React Components
+
+여기서는 React Components 를 어떻게 Typescript 로 만드는지 알아본다.
+
+여기서는 Typescript의 Interface 를 정의할 것이다.
+
+> **NOTE :** <br>
+> Typescript 에서 `interface`는 일반적으로 타입 체크를 위해 사용되며 **변수, 함수, 클래스**에 사용할 수 있다. <br>
+> `interface`는 프로퍼티와 메소드를 가질 수 있다는 점에서 클래스와 유사하나 **직접 인스턴스를 생성할 수는 없다.** <br>
+> 참고 : https://poiemaweb.com/typescript-interface
+
+React 타입인 SFC(Stateless Functional Component) 를 사용할 것이다. 일명 'Hook' 이라 한다.
+
+> **NOTE:** <br>
+> Hooks & Function Component <br>
+> 
+> React 16.8 부터 Function Component(함수형 컴포넌트)에 State를 사용할 수 있도록 해주는 Hooks 라는 개념이 생겼다. 그리고 React 개발자들 사이에서 중요하게 여겨지고 있다. Class Component 보다 Function Component 를 개발자들이 더 선호한다는 것을 알게 되었고 이 둘의 차이를 좁히기 위해 노력한다는 것도 알게 되었다. <br>
+> 참고 : https://boxfoxs.tistory.com/395
+> 
+> ```js
+> // Class Component
+> class TestComponent extends React.Component {
+>   render() {
+>     return (
+>        <h1> 테스트 {this.props.text} </h1>
+>     )
+>   }
+> }
+> 
+> // Functional Component
+> function TestComponent (prop) {
+>   return (
+>     <h1> 테스트 {this.props.text} </h1>
+>   )
+> }
+> ```
+
+속성 타입을 알려주는 모듈을 설치한다.
+
+```bash
+$ yarn add prop-types
+```
