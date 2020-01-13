@@ -289,7 +289,7 @@ export const IS_LOGGED_IN = gql`
 $ yarn start 
 ```
 
-<img src="" width="" alt="">
+<img src="https://drive.google.com/uc?id=1KypZNZRoS7rLc6x634t3t9BZqSzUc7_u" width="960" alt="Connecting Local State to Components">
 
 위 그림처럼 `"auth":{"isLoggedIn":false, ...}` 나타난 것을 볼 수 있다. 로그인 여부를 확인할 수 있다. 지금까지 `client` 측에서의 `resolver` 사용법을 간략하게 알아보았다.
 
@@ -297,16 +297,46 @@ $ yarn start
 
 ## #2.6 Typescript and React Components
 
-여기서는 React Components 를 어떻게 Typescript 로 만드는지 알아본다.
+여기서는 React Components 를 어떻게 Typescript 로 만드는지 알아본다. 여기서는 Typescript의 `interface` 를 정의할 것이다.
 
-여기서는 Typescript의 Interface 를 정의할 것이다.
-
-> **NOTE :** <br>
+> **NOTE :**
+> 
 > Typescript 에서 `interface`는 일반적으로 타입 체크를 위해 사용되며 **변수, 함수, 클래스**에 사용할 수 있다. <br>
 > `interface`는 프로퍼티와 메소드를 가질 수 있다는 점에서 클래스와 유사하나 **직접 인스턴스를 생성할 수는 없다.** <br>
+> 
 > 참고 : https://poiemaweb.com/typescript-interface
 
-React 타입인 SFC(Stateless Functional Component) 를 사용할 것이다. 일명 'Hook' 이라 한다.
+먼저 속성 타입을 알려주는 모듈을 설치한다.
+
+```bash
+$ yarn add prop-types
+```
+
+#### AppPresenter.tsx
+```tsx
+import PropTypes from "prop-types";
+import React from "react";
+
+// Typescript 에서 interface 는 일반적으로 타입 체크를 위해 사용되며 변수, 함수, 클래스에 사용할 수 있다.
+// https://poiemaweb.com/typescript-interface
+interface IProps {
+	isLoggedIn: boolean;
+}
+
+// SFC : Stateless Functional Component -> 다시 말해 함수형 컴포넌트, 일명 Hook 이라함
+const AppPresenter: React.SFC<IProps> = ({ isLoggedIn }) =>
+	isLoggedIn ? <span>you are in</span> : <span>you are out</span>;
+
+// AppPresenter 에 isLoggedIn 라는 속성을 추가한다.
+// 그리고 그 속성은 Bool 타입이며 필수이다.
+AppPresenter.propTypes = {
+	isLoggedIn: PropTypes.bool.isRequired,
+};
+
+export default AppPresenter;
+```
+
+React 타입인 `SFC`(Stateless Functional Component) 를 사용했다. 이것은 일명 'Hook' 이라 한다.
 
 > **NOTE:** <br>
 > Hooks & Function Component <br>
@@ -332,8 +362,118 @@ React 타입인 SFC(Stateless Functional Component) 를 사용할 것이다. 일
 > }
 > ```
 
-속성 타입을 알려주는 모듈을 설치한다.
+#### AppContainer.tsx
+```tsx
+import React from "react";
+import { graphql } from "react-apollo";
+import AppPresenter from "./AppPresenter";
+import { IS_LOGGED_IN } from "./AppQueries";
+
+const AppContainer = ({ data }) => (
+	<AppPresenter isLoggedIn={data.auth.isLoggedIn} />
+);
+
+export default graphql(IS_LOGGED_IN)(AppContainer);
+```
+
+- Hook 요소로 설정한 `AppPresenter` 를 불러온다. 이것은 로그인 여부를 출력해주는 구성요소(Component)이다.
+- `AppContainer` 는 `{ data }` 객체로 들어온 인자를 받는다. 그리고 들어온 인자로 `AppPresenter` 를 구성한다.
+- 결과적으로 `graphql` 함수를 이용해 로그인 여부를 서버에서 조회하고 다시 들어온 `{ data }`를 `AppContainer` 로 전달한다. 그리고 그 결과를 `export` 하는 것을 알 수 있다.
+
+출력은 다음과 같다. 참고로 `IS_LOGGED_IN` 데이터 조회는 현재 Local Cache 에서 불러오고 있다.
+
+<img src="https://drive.google.com/uc?id=1d3g1qpluKnZ45rj7gN7BNMo6y_tDQSv8" width="960" alt="Typescript and React Components">
+
+----
+
+## #2.7 Typescript and Styled Components part One
+
+이제부터 React 사용시 많이 사용되는 Styled Components 를 적용할 것이다.
+
+> **NOTE:**
+> #### Styled Components
+> 
+>  CSS 클래스 이름 지정 규칙에 대해 걱정할 필요없이 스타일을 구성 요소에 쉽게 범위 지정할 수있는 React 커뮤니티에서 널리 사용되는 CSS-in-JS 라이브러리이다.실제로 스타일이 지정된 구성 요소로 클래스 이름을 만들지 않는다. Styled Components 를 사용하기 위해선 먼저 설치를 해야한다.
+> ```
+> $ npm install styled-components
+> $ npm install @types/styled-components --save-dev
+> ```
+> Styled Components 도 Typescript 가 있기 때문에 같이 설치한다.
+> 
+> 참고: https://www.styled-components.com/
+
+그리고 여기서는 https://www.styled-components.com/docs/api#typescript 에서 기본적으로 지정된 테마를 그대로 가져와 만들 것이다. 부제목 TypeScript 에서 Create Theme 라고 소개된 `styled-components.ts` 를 그대로 복사하여 가져온다.
+
+#### typed-components.ts
+```ts
+import * as styledComponents from "styled-components/native";
+
+import IThemeInterface from "./theme";
+
+const {
+  default: styled,
+  css,
+  ThemeProvider
+} = styledComponents as styledComponents.ReactNativeThemedStyledComponentsModule<IThemeInterface>;
+
+export { css, ThemeProvider };
+export default styled;
+```
+
+그다음 `styled-components` 모듈, 그리고 Typescript 정의도 같이 설치한다.
 
 ```bash
-$ yarn add prop-types
+$ yarn add styled-components
+$ yarn add @types/styled-components
 ```
+
+`typed-components.ts` 내용을 보면 `"./theme"` 를 불러오는 것을 볼 수 있다. 이것은 Typescript 로 정의된 사용자의 `styled-components` 규칙이라 할 수 있다. 현재는 없기 때문에 `src/theme.ts` 파일을 생성한다.
+
+#### theme.ts
+```ts
+// 일단 기본 예시로 적어본 것
+export default interface IThemeInterface {
+  primaryColor : string;
+  primaryColorInverted : string;
+}
+```
+
+나중에 원하는 `styled-components` 를 적용하기 위해선 먼저 `AppPresenter.tsx` 에서 `typed-components.ts` 를 다음과 같이 불러와야 한다.
+
+#### AppPresenter.tsx
+```tsx
+import PropTypes from "prop-types";
+import React from "react";
+import styled from "../../typed-components"; // 나중에 본격적으로 작성할 시 이처럼 스타일 구성요소를 불러올 것이다.
+
+interface IProps {
+	isLoggedIn: boolean;
+}
+
+...
+```
+
+결국 우리가 작성한 `typed-components` 는 `styled-components` 의 `theme` 를 실제로 만들어주는 역할이다. 지금 까지는 대체적으로 어떤식으로 작동하는지 알아본 것이기 때문에 `theme.ts` 는 제거하고 그 안의 내용을 `typed-components` 로 다음과 같이 옮겨 놓자.
+
+#### typed-components.ts
+```ts
+import * as styledComponents from "styled-components/native";
+
+// theme.ts 에서 옮겨온 부분, 'export default' 가 없는 것에 유념하자.
+interface IThemeInterface {
+  primaryColor : string;
+  primaryColorInverted : string;
+}
+
+const {
+  default: styled,
+  css,
+  ThemeProvider
+} = styledComponents as styledComponents.ReactNativeThemedStyledComponentsModule<IThemeInterface>;
+
+export { css, ThemeProvider };
+export default styled;
+```
+
+----
+
